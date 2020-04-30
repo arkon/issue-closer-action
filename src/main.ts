@@ -3,14 +3,7 @@ import * as github from '@actions/github';
 
 async function run() {
   try {
-    const issueCloseMessage: string = core.getInput('issue-close-message');
-
-    if (!issueCloseMessage) {
-      throw new Error(
-        'Action must have at least one of issue-close-message set'
-      );
-    }
-
+    const issueCloseMessage: string = core.getInput('issue-close-message', {required: true});
     const issueBodyPattern: string = core.getInput('issue-body-pattern');
     const issueTitlePattern: string = core.getInput('issue-title-pattern');
 
@@ -38,8 +31,8 @@ async function run() {
 
     const issue: {owner: string; repo: string; number: number} = context.issue;
 
-    const bodyMatches: boolean = check(issueBodyPattern, payload?.issue?.body);
-    const titleMatches: boolean = check(issueTitlePattern, payload?.issue?.title);
+    const bodyMatches: boolean = issueBodyPattern && check(issueBodyPattern, payload?.issue?.body);
+    const titleMatches: boolean = issueTitlePattern && check(issueTitlePattern, payload?.issue?.title);
 
     // Do nothing if no match
     if (!bodyMatches && !titleMatches) {
