@@ -34,24 +34,21 @@ async function run() {
     const bodyMatches: boolean = issueBodyPattern && check(issueBodyPattern, payload?.issue?.body);
     const titleMatches: boolean = issueTitlePattern && check(issueTitlePattern, payload?.issue?.title);
 
-    // Do nothing if no match
-    if (!bodyMatches && !titleMatches) {
-      return;
+    if (bodyMatches || titleMatches) {   
+      // Comment and close
+      await client.issues.createComment({
+        owner: issue.owner,
+        repo: issue.repo,
+        issue_number: issue.number,
+        body: evalTemplate(issueCloseMessage, payload)
+      });
+      await client.issues.update({
+        owner: issue.owner,
+        repo: issue.repo,
+        issue_number: issue.number,
+        state: 'closed'
+      });
     }
-
-    // Comment and close
-    await client.issues.createComment({
-      owner: issue.owner,
-      repo: issue.repo,
-      issue_number: issue.number,
-      body: evalTemplate(issueCloseMessage, payload)
-    });
-    await client.issues.update({
-      owner: issue.owner,
-      repo: issue.repo,
-      issue_number: issue.number,
-      state: 'closed'
-    });
   } catch (error) {
     core.setFailed(error.message);
     return;

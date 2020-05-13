@@ -1,18 +1,18 @@
 {
   "name": "@arkon/issue-closer",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "GitHub action to automatically close issues based on regexs matching",
   "main": "lib/main.js",
   "scripts": {
     "build": "ncc build src/main.ts"
   },
   "dependencies": {
-    "@actions/core": "^1.2.3",
-    "@actions/github": "^2.1.1"
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^2.2.0"
   },
   "devDependencies": {
-    "@types/node": "^13.11.1",
+    "@types/node": "^14.0.1",
     "@zeit/ncc": "^0.22.1",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.2"
   }
 }
