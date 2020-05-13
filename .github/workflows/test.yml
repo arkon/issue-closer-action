@@ -1,13 +1,12 @@
-name: Autocloser
-on: [issues]
-jobs:
-  autoclose:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Autoclose issues
-      uses: arkon/issue-closer-action@v1.0
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        issue-close-message: "@${issue.user.login} this issue was automatically closed because it did not follow the issue template"
-        issue-title-pattern: ".*Test title.*"
-        issue-body-pattern: ".*Test body.*"
+name: Issue closer	
+on: [issues]	
+jobs:	
+  autoclose:	
+    runs-on: ubuntu-latest	
+    steps:	
+    - name: Autoclose issue	
+      uses: arkon/issue-closer-action@v1.0	
+      with:	
+        repo-token: ${{ secrets.GITHUB_TOKEN }}	
+        issue-close-message: "@${issue.user.login} this issue was automatically closed because it was not filled in correctly or the acknowledgment section was not removed."	
+        issue-body-pattern: ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*"
