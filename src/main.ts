@@ -3,13 +3,13 @@ import * as github from '@actions/github';
 
 async function run() {
   try {
-    const issueCloseMessage: string = core.getInput('issue-close-message', {required: true});
-    const issueBodyPattern: string = core.getInput('issue-body-pattern');
-    const issueTitlePattern: string = core.getInput('issue-title-pattern');
+    const type: string = core.getInput('type', {required: true});
+    const regex: string = core.getInput('regex', {required: true});
+    const message: string = core.getInput('message', {required: true});
 
-    if (!issueBodyPattern && !issueBodyPattern) {
+    if (type !== 'title' && type !== 'body') {
       throw new Error(
-        'Action must have at least one of issue-body-pattern or issue-title-pattern set'
+        '`type` must be either "title" or "body".'
       );
     }
 
@@ -31,16 +31,16 @@ async function run() {
 
     const issue: {owner: string; repo: string; number: number} = context.issue;
 
-    const bodyMatches: boolean = issueBodyPattern && check(issueBodyPattern, payload?.issue?.body);
-    const titleMatches: boolean = issueTitlePattern && check(issueTitlePattern, payload?.issue?.title);
+    const text = type === 'title' ? payload?.issue?.title : payload?.issue?.body;
+    const regexMatches: boolean = check(regex, text);
 
-    if (bodyMatches || titleMatches) {   
+    if (regexMatches) {
       // Comment and close
       await client.issues.createComment({
         owner: issue.owner,
         repo: issue.repo,
         issue_number: issue.number,
-        body: evalTemplate(issueCloseMessage, payload)
+        body: evalTemplate(message, payload)
       });
       await client.issues.update({
         owner: issue.owner,
@@ -51,7 +51,6 @@ async function run() {
     }
   } catch (error) {
     core.setFailed(error.message);
-    return;
   }
 }
 

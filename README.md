@@ -16,19 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Autoclose issues
-      uses: arkon/issue-closer-action@v1.0
+      uses: arkon/issue-closer-action@v1.1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        issue-close-message: "@${issue.user.login} this issue was automatically closed because it did not follow the issue template"
-        issue-title-pattern: ".*Placeholder title.*"
-        issue-body-pattern: ".*Remove me.*"
+        type: "title"
+        regex: ".*Placeholder title.*"
+        message: "@${issue.user.login} this issue was automatically closed because it did not follow the issue template"
 ```
 
-## Configuration
+## Inputs
 
-`issue-close-message` is an ES6-style template literals which will be evaluated with the issue
-webhook payload in context. The example above uses `${issue.user.login}` to get the author of the issue.
-
-* `issue` webhook [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)
-
-`issue-title-pattern` and `issue-body-pattern` are strings which are compiled to JavaScript `Regexp`s.
+| Name | Description |
+| ---- | ----------- |
+| `repo-token` | GitHub token |
+| `type` | Either `title` or `body`, indicating what to check. |
+| `regex` | String compiled to a JavaScript `Regexp`. If matched, the issue is closed. |
+| `message` | ES2015-style template literal evaluated with the issue webhook payload in context (see [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)). Posted when the issue is closed. |

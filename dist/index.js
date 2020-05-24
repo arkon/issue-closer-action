@@ -19,7 +19,13 @@ module.exports =
 /******/ 		};
 /******/
 /******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 		var threw = true;
+/******/ 		try {
+/******/ 			modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 			threw = false;
+/******/ 		} finally {
+/******/ 			if(threw) delete installedModules[moduleId];
+/******/ 		}
 /******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
@@ -1483,11 +1489,11 @@ function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const issueCloseMessage = core.getInput('issue-close-message', { required: true });
-            const issueBodyPattern = core.getInput('issue-body-pattern');
-            const issueTitlePattern = core.getInput('issue-title-pattern');
-            if (!issueBodyPattern && !issueBodyPattern) {
-                throw new Error('Action must have at least one of issue-body-pattern or issue-title-pattern set');
+            const type = core.getInput('type', { required: true });
+            const regex = core.getInput('regex', { required: true });
+            const message = core.getInput('message', { required: true });
+            if (type !== 'title' && type !== 'body') {
+                throw new Error('`type` must be either "title" or "body".');
             }
             // Get client and context
             const client = new github.GitHub(core.getInput('repo-token', { required: true }));
@@ -1501,15 +1507,15 @@ function run() {
                 throw new Error('Internal error, no sender provided by GitHub');
             }
             const issue = context.issue;
-            const bodyMatches = issueBodyPattern && check(issueBodyPattern, (_a = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _a === void 0 ? void 0 : _a.body);
-            const titleMatches = issueTitlePattern && check(issueTitlePattern, (_b = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _b === void 0 ? void 0 : _b.title);
-            if (bodyMatches || titleMatches) {
+            const text = type === 'title' ? (_a = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _a === void 0 ? void 0 : _a.title : (_b = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _b === void 0 ? void 0 : _b.body;
+            const regexMatches = check(regex, text);
+            if (regexMatches) {
                 // Comment and close
                 yield client.issues.createComment({
                     owner: issue.owner,
                     repo: issue.repo,
                     issue_number: issue.number,
-                    body: evalTemplate(issueCloseMessage, payload)
+                    body: evalTemplate(message, payload)
                 });
                 yield client.issues.update({
                     owner: issue.owner,
@@ -1521,7 +1527,6 @@ function run() {
         }
         catch (error) {
             core.setFailed(error.message);
-            return;
         }
     });
 }
