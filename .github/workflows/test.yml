@@ -4,24 +4,25 @@ jobs:
   autoclose:
     runs-on: ubuntu-latest
     steps:
-    - name: Autoclose when title not filled out
-      uses: arkon/issue-closer-action@v1.1
+    - name: Autoclose issue
+      uses: arkon/issue-closer-action@v2.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        type: title
-        regex: ".*Test title.*"
-        message: "@${issue.user.login} this issue was automatically closed because the title was not updated."
-    - name: Autoclose when body acknowledgement section not removed
-      uses: arkon/issue-closer-action@v1.1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        type: body
-        regex: ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*"
-        message: "@${issue.user.login} this issue was automatically closed because the acknowledgment section was not removed."
-    - name: Autoclose when body requested information not filled out
-      uses: arkon/issue-closer-action@v1.1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        type: body
-        regex: ".*Test: \\?.*"
-        message: "@${issue.user.login} this issue was automatically closed because the requested information was not filled out."
+        rules: |
+          [
+            {
+              "type": "title",
+              "regex": ".*Test title.*",
+              "message": "@${issue.user.login} this issue was automatically closed because the title was not updated."
+            },
+            {
+              "type": "body",
+              "regex": ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*",
+              "message": "@${issue.user.login} this issue was automatically closed because the acknowledgment section was not removed."
+            },
+            {
+              "type": "body",
+              "regex": ".*Test: \\?.*",
+              "message": "@${issue.user.login} this issue was automatically closed because the requested information was not filled out."
+            }
+          ]

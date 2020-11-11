@@ -1,17 +1,15 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
+interface Rule {
+  type: 'title' | 'body';
+  regex: string;
+  message: string;
+}
+
 async function run() {
   try {
-    const type: string = core.getInput('type', {required: true});
-    const regex: string = core.getInput('regex', {required: true});
-    const message: string = core.getInput('message', {required: true});
-
-    if (type !== 'title' && type !== 'body') {
-      throw new Error(
-        '`type` must be either "title" or "body".'
-      );
-    }
+    const rules: string = core.getInput('rules', {required: true});
 
     // Get client and context
     const client: github.GitHub = new github.GitHub(
@@ -31,17 +29,29 @@ async function run() {
 
     const issue: {owner: string; repo: string; number: number} = context.issue;
 
-    const text = type === 'title' ? payload?.issue?.title : payload?.issue?.body;
-    const regexMatches: boolean = check(regex, text);
+    const parsedRules = JSON.parse(rules) as Rule[];
+    const results = parsedRules
+      .map(rule => {
+        const text = rule.type === 'title' ? payload?.issue?.title : payload?.issue?.body;
+        const regexMatches: boolean = check(rule.regex, text);
 
-    if (regexMatches) {
+        if (regexMatches) {
+          return rule.message;
+        }
+      })
+      .filter(Boolean);
+
+    if (results.length > 0) {
       // Comment and close
+      const message = ['@${issue.user.login} this issue was automatically closed because:\n', ...results].join('\n- ');
+
       await client.issues.createComment({
         owner: issue.owner,
         repo: issue.repo,
         issue_number: issue.number,
         body: evalTemplate(message, payload)
       });
+
       await client.issues.update({
         owner: issue.owner,
         repo: issue.repo,
