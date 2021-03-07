@@ -4,19 +4,23 @@ _This is a modified version of https://github.com/roots/issue-closer-action_
 
 Automatically close issues whose title or body text matches the specified regular expression pattern.
 
+Rules are re-evaluated on issue edits and automatically reopens the issue if the rules pass.
+
 ## Installation
 
 To configure the action simply add the following lines to your `.github/main.workflow` workflow file:
 
 ```yml
 name: Autocloser
-on: [issues]
+on:
+  issues:
+    types: [opened, edited, reopened]
 jobs:
   autoclose:
     runs-on: ubuntu-latest
     steps:
     - name: Autoclose issues
-      uses: arkon/issue-closer-action@v2.0
+      uses: arkon/issue-closer-action@v3.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         rules: |
