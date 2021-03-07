@@ -7,6 +7,8 @@ interface Rule {
   message: string;
 }
 
+const ALLOWED_ACTIONS = ['opened', 'edited', 'reopened'];
+
 async function run() {
   try {
     const rules: string = core.getInput('rules', {required: true});
@@ -18,8 +20,8 @@ async function run() {
     const context = github.context;
     const payload = context.payload;
 
-    // Do nothing if it's wasn't being opened or it's not an issue
-    if (payload.action !== 'opened' || !payload.issue) {
+    // Do nothing if it's wasn't a relevant action or it's not an issue
+    if (ALLOWED_ACTIONS.indexOf(payload.action) === -1 || !payload.issue) {
       return;
     }
 
@@ -36,14 +38,21 @@ async function run() {
         const regexMatches: boolean = check(rule.regex, text);
 
         if (regexMatches) {
+          core.info(`Failed: ${rule.message}`);
           return rule.message;
+        } else {
+          core.info(`Passed: ${rule.message}`);
         }
       })
       .filter(Boolean);
 
     if (results.length > 0) {
-      // Comment and close
-      const message = ['@${issue.user.login} this issue was automatically closed because:\n', ...results].join('\n- ');
+      // Comment and close if failed any rule
+      const infoMessage = payload.action === 'opened'
+        ? 'automatically closed'
+        : 'not reopened'
+
+      const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
 
       await client.issues.createComment({
         owner: issue.owner,
@@ -57,6 +66,14 @@ async function run() {
         repo: issue.repo,
         issue_number: issue.number,
         state: 'closed'
+      });
+    } else if (payload.action === 'edited') {
+      // Re-open if edited issue is valid
+      await client.issues.update({
+        owner: issue.owner,
+        repo: issue.repo,
+        issue_number: issue.number,
+        state: 'open'
       });
     }
   } catch (error) {

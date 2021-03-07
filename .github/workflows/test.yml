@@ -1,5 +1,7 @@
 name: Issue closer test
-on: [issues]
+on:
+  issues:
+    types: [opened, edited, reopened]
 jobs:
   autoclose:
     runs-on: ubuntu-latest
@@ -8,6 +10,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Autoclose issue
+      # uses: arkon/issue-closer-action@v2.0
       uses: ./
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -16,16 +19,16 @@ jobs:
             {
               "type": "title",
               "regex": ".*Test title.*",
-              "message": "@${issue.user.login} this issue was automatically closed because the title was not updated."
+              "message": "The title was not updated."
             },
             {
               "type": "body",
               "regex": ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*",
-              "message": "@${issue.user.login} this issue was automatically closed because the acknowledgment section was not removed."
+              "message": "The acknowledgment section was not removed."
             },
             {
               "type": "body",
               "regex": ".*Test: \\?.*",
-              "message": "@${issue.user.login} this issue was automatically closed because the requested information was not filled out."
+              "message": "The requested information was not filled out."
             }
           ]
