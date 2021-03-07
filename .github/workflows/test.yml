@@ -4,8 +4,11 @@ jobs:
   autoclose:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout repo
+      uses: actions/checkout@v1
+
     - name: Autoclose issue
-      uses: arkon/issue-closer-action@v2.0
+      uses: ./
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         rules: |

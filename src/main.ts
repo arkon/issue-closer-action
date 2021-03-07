@@ -12,7 +12,7 @@ async function run() {
     const rules: string = core.getInput('rules', {required: true});
 
     // Get client and context
-    const client: github.GitHub = new github.GitHub(
+    const client = github.getOctokit(
       core.getInput('repo-token', {required: true})
     );
     const context = github.context;
