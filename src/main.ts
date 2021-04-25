@@ -68,13 +68,22 @@ async function run() {
         state: 'closed'
       });
     } else if (payload.action === 'edited') {
-      // Re-open if edited issue is valid
-      await client.issues.update({
+      const issueData = await client.issues.get({
         owner: issue.owner,
         repo: issue.repo,
         issue_number: issue.number,
-        state: 'open'
       });
+      const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
+
+      // Re-open if edited issue is valid
+      if (wasClosedByBot) {
+        await client.issues.update({
+          owner: issue.owner,
+          repo: issue.repo,
+          issue_number: issue.number,
+          state: 'open'
+        });
+      }
     }
   } catch (error) {
     core.setFailed(error.message);

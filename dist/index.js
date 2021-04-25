@@ -360,13 +360,21 @@ function run() {
                 });
             }
             else if (payload.action === 'edited') {
-                // Re-open if edited issue is valid
-                yield client.issues.update({
+                const issueData = yield client.issues.get({
                     owner: issue.owner,
                     repo: issue.repo,
                     issue_number: issue.number,
-                    state: 'open'
                 });
+                const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
+                // Re-open if edited issue is valid
+                if (wasClosedByBot) {
+                    yield client.issues.update({
+                        owner: issue.owner,
+                        repo: issue.repo,
+                        issue_number: issue.number,
+                        state: 'open'
+                    });
+                }
             }
         }
         catch (error) {
