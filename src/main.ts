@@ -46,11 +46,17 @@ async function run() {
       })
       .filter(Boolean);
 
-    if (results.length > 0) {
+    const issueData = await client.issues.get({
+      owner: issue.owner,
+      repo: issue.repo,
+      issue_number: issue.number,
+    });
+
+    if (results.length > 0 && issueData.data.state === 'open') {
       // Comment and close if failed any rule
       const infoMessage = payload.action === 'opened'
         ? 'automatically closed'
-        : 'not reopened'
+        : 'not reopened';
 
       const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
 
@@ -68,11 +74,6 @@ async function run() {
         state: 'closed'
       });
     } else if (payload.action === 'edited') {
-      const issueData = await client.issues.get({
-        owner: issue.owner,
-        repo: issue.repo,
-        issue_number: issue.number,
-      });
       const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
 
       // Re-open if edited issue is valid
@@ -93,11 +94,7 @@ async function run() {
 function check(patternString: string, text: string | undefined): boolean {
   const pattern: RegExp = new RegExp(patternString);
 
-  if (text?.match(pattern)) {
-    return true;
-  } else {
-    return false;
-  }
+  return text?.match(pattern) !== null;
 }
 
 function evalTemplate(template: string, params: any) {

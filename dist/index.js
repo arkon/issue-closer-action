@@ -340,7 +340,12 @@ function run() {
                 }
             })
                 .filter(Boolean);
-            if (results.length > 0) {
+            const issueData = yield client.issues.get({
+                owner: issue.owner,
+                repo: issue.repo,
+                issue_number: issue.number,
+            });
+            if (results.length > 0 && issueData.data.state === 'open') {
                 // Comment and close if failed any rule
                 const infoMessage = payload.action === 'opened'
                     ? 'automatically closed'
@@ -360,11 +365,6 @@ function run() {
                 });
             }
             else if (payload.action === 'edited') {
-                const issueData = yield client.issues.get({
-                    owner: issue.owner,
-                    repo: issue.repo,
-                    issue_number: issue.number,
-                });
                 const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
                 // Re-open if edited issue is valid
                 if (wasClosedByBot) {
@@ -384,12 +384,7 @@ function run() {
 }
 function check(patternString, text) {
     const pattern = new RegExp(patternString);
-    if (text === null || text === void 0 ? void 0 : text.match(pattern)) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return (text === null || text === void 0 ? void 0 : text.match(pattern)) !== null;
 }
 function evalTemplate(template, params) {
     return Function(...Object.keys(params), `return \`${template}\``)(...Object.values(params));
