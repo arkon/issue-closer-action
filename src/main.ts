@@ -11,25 +11,22 @@ const ALLOWED_ACTIONS = ['opened', 'edited', 'reopened'];
 
 async function run() {
   try {
+    const { issue, payload } = github.context;
+
+    // Do nothing if it's wasn't a relevant action or it's not an issue
+    if (ALLOWED_ACTIONS.indexOf(payload.action) === -1 || !payload.issue) {
+      return;
+    }
+    if (!payload.sender) {
+      throw new Error('Internal error, no sender provided by GitHub');
+    }
+
     const rules: string = core.getInput('rules', {required: true});
 
     // Get client and context
     const client = github.getOctokit(
       core.getInput('repo-token', {required: true})
     );
-    const context = github.context;
-    const payload = context.payload;
-
-    // Do nothing if it's wasn't a relevant action or it's not an issue
-    if (ALLOWED_ACTIONS.indexOf(payload.action) === -1 || !payload.issue) {
-      return;
-    }
-
-    if (!payload.sender) {
-      throw new Error('Internal error, no sender provided by GitHub');
-    }
-
-    const issue: {owner: string; repo: string; number: number} = context.issue;
 
     const parsedRules = JSON.parse(rules) as Rule[];
     const results = parsedRules
@@ -46,43 +43,43 @@ async function run() {
       })
       .filter(Boolean);
 
-    const issueData = await client.issues.get({
+    const issueMetadata = {
       owner: issue.owner,
       repo: issue.repo,
       issue_number: issue.number,
-    });
+    };
 
-    if (results.length > 0 && issueData.data.state === 'open') {
+    const issueData = await client.issues.get(issueMetadata);
+
+    if (results.length > 0) {
       // Comment and close if failed any rule
       const infoMessage = payload.action === 'opened'
         ? 'automatically closed'
         : 'not reopened';
 
-      const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
+      // Avoid commenting about automatic closure if it was already closed
+      const shouldComment = (payload.action === 'opened' && issueData.data.state === 'open')
+        || (payload.action === 'edited' && issueData.data.state === 'closed');
 
-      await client.issues.createComment({
-        owner: issue.owner,
-        repo: issue.repo,
-        issue_number: issue.number,
-        body: evalTemplate(message, payload)
-      });
+      if (shouldComment) {
+        const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
+
+        await client.issues.createComment({
+          ...issueMetadata,
+          body: evalTemplate(message, payload),
+        });
+      }
 
       await client.issues.update({
-        owner: issue.owner,
-        repo: issue.repo,
-        issue_number: issue.number,
-        state: 'closed'
+        ...issueMetadata,
+        state: 'closed',
       });
     } else if (payload.action === 'edited') {
-      const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
-
-      // Re-open if edited issue is valid
-      if (wasClosedByBot) {
+      // Re-open if edited issue is valid and was previously closed by action
+      if (issueData.data.closed_by?.login === 'github-actions[bot]') {
         await client.issues.update({
-          owner: issue.owner,
-          repo: issue.repo,
-          issue_number: issue.number,
-          state: 'open'
+          ...issueMetadata,
+          state: 'open',
         });
       }
     }
@@ -92,8 +89,7 @@ async function run() {
 }
 
 function check(patternString: string, text: string | undefined): boolean {
-  const pattern: RegExp = new RegExp(patternString);
-
+  const pattern = new RegExp(patternString);
   return text?.match(pattern) !== null;
 }
 

@@ -310,13 +310,10 @@ const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
 const ALLOWED_ACTIONS = ['opened', 'edited', 'reopened'];
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const rules = core.getInput('rules', { required: true });
-            // Get client and context
-            const client = github.getOctokit(core.getInput('repo-token', { required: true }));
-            const context = github.context;
-            const payload = context.payload;
+            const { issue, payload } = github.context;
             // Do nothing if it's wasn't a relevant action or it's not an issue
             if (ALLOWED_ACTIONS.indexOf(payload.action) === -1 || !payload.issue) {
                 return;
@@ -324,7 +321,9 @@ function run() {
             if (!payload.sender) {
                 throw new Error('Internal error, no sender provided by GitHub');
             }
-            const issue = context.issue;
+            const rules = core.getInput('rules', { required: true });
+            // Get client and context
+            const client = github.getOctokit(core.getInput('repo-token', { required: true }));
             const parsedRules = JSON.parse(rules);
             const results = parsedRules
                 .map(rule => {
@@ -340,40 +339,30 @@ function run() {
                 }
             })
                 .filter(Boolean);
-            const issueData = yield client.issues.get({
+            const issueMetadata = {
                 owner: issue.owner,
                 repo: issue.repo,
                 issue_number: issue.number,
-            });
-            if (results.length > 0 && issueData.data.state === 'open') {
+            };
+            const issueData = yield client.issues.get(issueMetadata);
+            if (results.length > 0) {
                 // Comment and close if failed any rule
                 const infoMessage = payload.action === 'opened'
                     ? 'automatically closed'
                     : 'not reopened';
-                const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
-                yield client.issues.createComment({
-                    owner: issue.owner,
-                    repo: issue.repo,
-                    issue_number: issue.number,
-                    body: evalTemplate(message, payload)
-                });
-                yield client.issues.update({
-                    owner: issue.owner,
-                    repo: issue.repo,
-                    issue_number: issue.number,
-                    state: 'closed'
-                });
+                // Avoid commenting about automatic closure if it was already closed
+                const shouldComment = (payload.action === 'opened' && issueData.data.state === 'open')
+                    || (payload.action === 'edited' && issueData.data.state === 'closed');
+                if (shouldComment) {
+                    const message = [`@\${issue.user.login} this issue was ${infoMessage} because:\n`, ...results].join('\n- ');
+                    yield client.issues.createComment(Object.assign(Object.assign({}, issueMetadata), { body: evalTemplate(message, payload) }));
+                }
+                yield client.issues.update(Object.assign(Object.assign({}, issueMetadata), { state: 'closed' }));
             }
             else if (payload.action === 'edited') {
-                const wasClosedByBot = issueData.data.closed_by.login === 'github-actions[bot]';
-                // Re-open if edited issue is valid
-                if (wasClosedByBot) {
-                    yield client.issues.update({
-                        owner: issue.owner,
-                        repo: issue.repo,
-                        issue_number: issue.number,
-                        state: 'open'
-                    });
+                // Re-open if edited issue is valid and was previously closed by action
+                if (((_a = issueData.data.closed_by) === null || _a === void 0 ? void 0 : _a.login) === 'github-actions[bot]') {
+                    yield client.issues.update(Object.assign(Object.assign({}, issueMetadata), { state: 'open' }));
                 }
             }
         }
