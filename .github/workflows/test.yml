@@ -9,7 +9,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v1
       with:
-        ref: 'add-blocklist-rule'
+        ref: add-blocklist-rule
 
     - name: Autoclose issue
       # uses: arkon/issue-closer-action@v3.2
