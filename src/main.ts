@@ -2,8 +2,9 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 
 interface Rule {
-  type: 'title' | 'body';
+  type: 'title' | 'body' | 'both';
   regex: string;
+  caseIgnore?: boolean;
   message: string;
 }
 
@@ -31,14 +32,24 @@ async function run() {
     const parsedRules = JSON.parse(rules) as Rule[];
     const results = parsedRules
       .map(rule => {
-        const text = rule.type === 'title' ? payload?.issue?.title : payload?.issue?.body;
-        const regexMatches: boolean = check(rule.regex, text);
+        let texts: Array<string> = [payload?.issue?.title];
 
-        if (regexMatches) {
-          core.info(`Failed: ${rule.message}`);
-          return rule.message;
+        if (rule.type === 'body') {
+          texts = [payload?.issue?.body];
+        } else if (rule.type === 'both') {
+          texts.push(payload?.issue?.body)
+        }
+
+        const regexMatches = check(rule.regex, texts, rule.caseIgnore || false);
+        const failed = regexMatches.length > 0;
+        const match = failed ? '<No match>' : regexMatches[0][1];
+        const message = rule.message.replace(/\{match\}/g, match)
+
+        if (failed) {
+          core.info(`Failed: ${message}`);
+          return message;
         } else {
-          core.info(`Passed: ${rule.message}`);
+          core.info(`Passed: ${message}`);
         }
       })
       .filter(Boolean);
@@ -88,9 +99,11 @@ async function run() {
   }
 }
 
-function check(patternString: string, text: string | undefined): boolean {
+function check(patternString: string, texts: Array<string> | undefined, caseIgnore: boolean = false): Array<RegExpMatchArray> {
   const pattern = new RegExp(patternString);
-  return text?.match(pattern) !== null;
+  return texts
+    ?.map(text => text.match(pattern))
+    ?.filter(Boolean);
 }
 
 function evalTemplate(template: string, params: any) {
