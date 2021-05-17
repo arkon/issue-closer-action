@@ -4,7 +4,7 @@ import * as github from '@actions/github';
 interface Rule {
   type: 'title' | 'body' | 'both';
   regex: string;
-  caseIgnore?: boolean;
+  ignoreCase?: boolean;
   message: string;
 }
 
@@ -32,7 +32,7 @@ async function run() {
     const parsedRules = JSON.parse(rules) as Rule[];
     const results = parsedRules
       .map(rule => {
-        let texts: Array<string> = [payload?.issue?.title];
+        let texts: string[] = [payload?.issue?.title];
 
         if (rule.type === 'body') {
           texts = [payload?.issue?.body];
@@ -40,10 +40,10 @@ async function run() {
           texts.push(payload?.issue?.body)
         }
 
-        const regexMatches = check(rule.regex, texts, rule.caseIgnore || false);
+        const regexMatches = check(rule.regex, texts, rule.ignoreCase);
         const failed = regexMatches.length > 0;
         const match = failed ? '<No match>' : regexMatches[0][1];
-        const message = rule.message.replace(/\{match\}/g, match)
+        const message = rule.message.replace(/\{match\}/g, match);
 
         if (failed) {
           core.info(`Failed: ${message}`);
@@ -99,8 +99,8 @@ async function run() {
   }
 }
 
-function check(patternString: string, texts: Array<string> | undefined, caseIgnore: boolean = false): Array<RegExpMatchArray> {
-  const pattern = new RegExp(patternString);
+function check(patternString: string, texts: string[] | undefined, ignoreCase: boolean = false): Array<RegExpMatchArray> {
+  const pattern = new RegExp(patternString, ignoreCase ? 'i' : undefined);
   return texts
     ?.map(text => {
       return text
