@@ -104,7 +104,7 @@ function check(patternString: string, texts: Array<string> | undefined, caseIgno
   return texts
     ?.map(text => {
       return text
-        .normalize("NFD")
+        .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .match(pattern);
     })
