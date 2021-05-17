@@ -30,5 +30,11 @@ jobs:
               "type": "body",
               "regex": ".*Test: \\?.*",
               "message": "The requested information was not filled out."
+            },
+            {
+              "type": "both",
+              "regex":".*(mangago|mangafox|hq\s*dragon|manga\s*host).*",
+              "caseIgnore": true,
+              "message": "{match} will not be added back as it is too difficult to maintain"
             }
           ]
