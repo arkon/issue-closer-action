@@ -102,7 +102,12 @@ async function run() {
 function check(patternString: string, texts: Array<string> | undefined, caseIgnore: boolean = false): Array<RegExpMatchArray> {
   const pattern = new RegExp(patternString);
   return texts
-    ?.map(text => text.match(pattern))
+    ?.map(text => {
+      return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, '')
+        .match(pattern);
+    })
     ?.filter(Boolean);
 }
 
