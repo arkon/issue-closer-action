@@ -44,12 +44,13 @@ jobs:
 
 ```js
 {
-  type: 'title' | 'body';
+  type: 'title' | 'body' | 'both';
   regex: string;
+  ignoreCase: boolean | undefined;
   message: string;
 }
 ```
 
 - `type`: Part to run regex against.
 - `regex`: String compiled to a JavaScript `Regexp`. If matched, the issue is closed.
-- `message`: ES2015-style template literal evaluated with the issue webhook payload in context (see [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)). Posted when the issue is closed.
+- `message`: ES2015-style template literal evaluated with the issue webhook payload in context (see [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)). Posted when the issue is closed. You can use `{match}` as a placeholder to the first match.

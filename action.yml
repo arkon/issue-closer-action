@@ -14,9 +14,11 @@ inputs:
       A JSON-compliant string containing a list of rules, where a rule consists of:
 
       {
-        type: 'title' | 'body';  // Part to run regex against.
-        regex: string;           // Pattern which if matched closes the issue.
-        message: string;         // Message to post when closing the issue.
+        type: 'title' | 'body';          // Part to run regex against.
+        regex: string;                   // Pattern which if matched closes the issue.
+        ignoreCase: boolean | undefined; // Defines if the regex will be case insensitive.
+        message: string;                 // Message to post when closing the issue.
+                                         // You can use {match} as a placeholder to the first match.
       }
 runs:
   using: node12

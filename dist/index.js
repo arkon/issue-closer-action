@@ -327,15 +327,24 @@ function run() {
             const parsedRules = JSON.parse(rules);
             const results = parsedRules
                 .map(rule => {
-                var _a, _b;
-                const text = rule.type === 'title' ? (_a = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _a === void 0 ? void 0 : _a.title : (_b = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _b === void 0 ? void 0 : _b.body;
-                const regexMatches = check(rule.regex, text);
-                if (regexMatches) {
-                    core.info(`Failed: ${rule.message}`);
-                    return rule.message;
+                var _a, _b, _c;
+                let texts = [(_a = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _a === void 0 ? void 0 : _a.title];
+                if (rule.type === 'body') {
+                    texts = [(_b = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _b === void 0 ? void 0 : _b.body];
+                }
+                else if (rule.type === 'both') {
+                    texts.push((_c = payload === null || payload === void 0 ? void 0 : payload.issue) === null || _c === void 0 ? void 0 : _c.body);
+                }
+                const regexMatches = check(rule.regex, texts, rule.ignoreCase);
+                const failed = regexMatches.length > 0;
+                const match = failed ? regexMatches[0][1] : '<No match>';
+                const message = rule.message.replace(/\{match\}/g, match);
+                if (failed) {
+                    core.info(`Failed: ${message}`);
+                    return message;
                 }
                 else {
-                    core.info(`Passed: ${rule.message}`);
+                    core.info(`Passed: ${message}`);
                 }
             })
                 .filter(Boolean);
@@ -371,9 +380,15 @@ function run() {
         }
     });
 }
-function check(patternString, text) {
-    const pattern = new RegExp(patternString);
-    return (text === null || text === void 0 ? void 0 : text.match(pattern)) !== null;
+function check(patternString, texts, ignoreCase = false) {
+    var _a;
+    const pattern = new RegExp(patternString, ignoreCase ? 'i' : undefined);
+    return (_a = texts === null || texts === void 0 ? void 0 : texts.map(text => {
+        return text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .match(pattern);
+    })) === null || _a === void 0 ? void 0 : _a.filter(Boolean);
 }
 function evalTemplate(template, params) {
     return Function(...Object.keys(params), `return \`${template}\``)(...Object.values(params));

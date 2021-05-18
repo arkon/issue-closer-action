@@ -2,8 +2,9 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 
 interface Rule {
-  type: 'title' | 'body';
+  type: 'title' | 'body' | 'both';
   regex: string;
+  ignoreCase?: boolean;
   message: string;
 }
 
@@ -31,14 +32,24 @@ async function run() {
     const parsedRules = JSON.parse(rules) as Rule[];
     const results = parsedRules
       .map(rule => {
-        const text = rule.type === 'title' ? payload?.issue?.title : payload?.issue?.body;
-        const regexMatches: boolean = check(rule.regex, text);
+        let texts: string[] = [payload?.issue?.title];
 
-        if (regexMatches) {
-          core.info(`Failed: ${rule.message}`);
-          return rule.message;
+        if (rule.type === 'body') {
+          texts = [payload?.issue?.body];
+        } else if (rule.type === 'both') {
+          texts.push(payload?.issue?.body)
+        }
+
+        const regexMatches = check(rule.regex, texts, rule.ignoreCase);
+        const failed = regexMatches.length > 0;
+        const match = failed ? regexMatches[0][1] : '<No match>';
+        const message = rule.message.replace(/\{match\}/g, match);
+
+        if (failed) {
+          core.info(`Failed: ${message}`);
+          return message;
         } else {
-          core.info(`Passed: ${rule.message}`);
+          core.info(`Passed: ${message}`);
         }
       })
       .filter(Boolean);
@@ -88,9 +99,28 @@ async function run() {
   }
 }
 
-function check(patternString: string, text: string | undefined): boolean {
-  const pattern = new RegExp(patternString);
-  return text?.match(pattern) !== null;
+/**
+ * Checks all the texts in an array through an RegEx pattern 
+ * and returns the match results of the ones that matched.
+ * 
+ * @param patternString The RegEx input in string format that will be created.
+ * @param texts The text array that will be tested through the pattern.
+ * @param ignoreCase If it should be case insensitive.
+ * @returns An array of the RegEx match results.
+ */
+function check(patternString: string, texts: string[] | undefined, ignoreCase: boolean = false): Array<RegExpMatchArray> {
+  const pattern = new RegExp(patternString, ignoreCase ? 'i' : undefined);
+  return texts
+    ?.map(text => {
+      // For all the texts (title or body), the input will be
+      // normalized to remove any accents or diacritics, and then
+      // will be tested by the pattern provided.
+      return text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .match(pattern);
+    })
+    ?.filter(Boolean);
 }
 
 function evalTemplate(template: string, params: any) {
