@@ -1,6 +1,6 @@
 {
   "name": "@arkon/issue-closer",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "GitHub action to automatically close issues based on regexs matching",
   "license": "MIT",
   "repository": {
