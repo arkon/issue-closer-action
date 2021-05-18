@@ -35,7 +35,7 @@ jobs:
             },
             {
               "type": "both",
-              "regex":".*(mangago|mangafox|hq\s*dragon|manga\s*host).*",
+              "regex":".*(mangago|mangafox|hq\\s*dragon|manga\\s*host).*",
               "caseIgnore": true,
               "message": "{match} will not be added back as it is too difficult to maintain"
             }
