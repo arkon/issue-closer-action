@@ -337,7 +337,7 @@ function run() {
                 }
                 const regexMatches = check(rule.regex, texts, rule.ignoreCase);
                 const failed = regexMatches.length > 0;
-                const match = failed ? '<No match>' : regexMatches[0][1];
+                const match = failed ? regexMatches[0][1] : '<No match>';
                 const message = rule.message.replace(/\{match\}/g, match);
                 if (failed) {
                     core.info(`Failed: ${message}`);
