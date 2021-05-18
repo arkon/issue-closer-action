@@ -36,7 +36,7 @@ jobs:
             {
               "type": "both",
               "regex":".*(mangago|mangafox|hq\\s*dragon|manga\\s*host).*",
-              "caseIgnore": true,
+              "ignoreCase": true,
               "message": "{match} will not be added back as it is too difficult to maintain"
             }
           ]
