@@ -10,7 +10,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Autoclose issue
-      # uses: arkon/issue-closer-action@v3.2
+      # uses: arkon/issue-closer-action@v3.3
       uses: ./
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}

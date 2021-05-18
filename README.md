@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Autoclose issues
-      uses: arkon/issue-closer-action@v3.2
+      uses: arkon/issue-closer-action@v3.3
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         rules: |
@@ -52,5 +52,6 @@ jobs:
 ```
 
 - `type`: Part to run regex against.
-- `regex`: String compiled to a JavaScript `Regexp`. If matched, the issue is closed.
+- `regex`: String compiled to a JavaScript `RegExp`. If matched, the issue is closed.
+- `ignoreCase`: Optionally make the regex case insensitive. Defaults to `false`.
 - `message`: ES2015-style template literal evaluated with the issue webhook payload in context (see [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)). Posted when the issue is closed. You can use `{match}` as a placeholder to the first match.

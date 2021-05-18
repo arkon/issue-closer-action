@@ -380,10 +380,22 @@ function run() {
         }
     });
 }
+/**
+ * Checks all the texts in an array through an RegEx pattern
+ * and returns the match results of the ones that matched.
+ *
+ * @param patternString The RegEx input in string format that will be created.
+ * @param texts The text array that will be tested through the pattern.
+ * @param ignoreCase If it should be case insensitive.
+ * @returns An array of the RegEx match results.
+ */
 function check(patternString, texts, ignoreCase = false) {
     var _a;
     const pattern = new RegExp(patternString, ignoreCase ? 'i' : undefined);
     return (_a = texts === null || texts === void 0 ? void 0 : texts.map(text => {
+        // For all the texts (title or body), the input will be
+        // normalized to remove any accents or diacritics, and then
+        // will be tested by the pattern provided.
         return text
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
