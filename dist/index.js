@@ -324,6 +324,19 @@ function run() {
             const rules = core.getInput('rules', { required: true });
             // Get client and context
             const client = github.getOctokit(core.getInput('repo-token', { required: true }));
+            const issueMetadata = {
+                owner: issue.owner,
+                repo: issue.repo,
+                issue_number: issue.number,
+            };
+            const issueData = yield client.issues.get(issueMetadata);
+            const ignoreLabel = core.getInput('ignoreLabel');
+            if (ignoreLabel) {
+                if (issueData.data.labels.find((label) => label.name === ignoreLabel)) {
+                    core.info(`Ignoring issue with label ${ignoreLabel}`);
+                    return;
+                }
+            }
             const parsedRules = JSON.parse(rules);
             const results = parsedRules
                 .map(rule => {
@@ -348,12 +361,6 @@ function run() {
                 }
             })
                 .filter(Boolean);
-            const issueMetadata = {
-                owner: issue.owner,
-                repo: issue.repo,
-                issue_number: issue.number,
-            };
-            const issueData = yield client.issues.get(issueMetadata);
             if (results.length > 0) {
                 // Comment and close if failed any rule
                 const infoMessage = payload.action === 'opened'

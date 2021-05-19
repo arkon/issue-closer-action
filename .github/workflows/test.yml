@@ -14,6 +14,7 @@ jobs:
       uses: ./
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
+        ignoreLabel: do-not-autoclose
         rules: |
           [
             {

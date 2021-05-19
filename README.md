@@ -39,6 +39,7 @@ jobs:
 | ---- | ----------- |
 | `repo-token` | GitHub token |
 | `rules` | A JSON-compliant string containing a list of rules, where a rule consists of the content below. |
+| `ignoreLabel` | Optional label name. If present, action is skipped. |
 
 ### Rule
 
@@ -46,12 +47,12 @@ jobs:
 {
   type: 'title' | 'body' | 'both';
   regex: string;
-  ignoreCase: boolean | undefined;
   message: string;
+  ignoreCase: boolean | undefined;
 }
 ```
 
 - `type`: Part to run regex against.
 - `regex`: String compiled to a JavaScript `RegExp`. If matched, the issue is closed.
-- `ignoreCase`: Optionally make the regex case insensitive. Defaults to `false`.
 - `message`: ES2015-style template literal evaluated with the issue webhook payload in context (see [payload example](https://developer.github.com/v3/activity/events/types/#webhook-payload-example-15)). Posted when the issue is closed. You can use `{match}` as a placeholder to the first match.
+- `ignoreCase`: Optionally make the regex case insensitive. Defaults to `false`.

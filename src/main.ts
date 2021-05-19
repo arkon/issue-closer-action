@@ -29,6 +29,22 @@ async function run() {
       core.getInput('repo-token', {required: true})
     );
 
+    const issueMetadata = {
+      owner: issue.owner,
+      repo: issue.repo,
+      issue_number: issue.number,
+    };
+
+    const issueData = await client.issues.get(issueMetadata);
+
+    const ignoreLabel: string = core.getInput('ignoreLabel');
+    if (ignoreLabel) {
+      if (issueData.data.labels.find((label: any) => label.name === ignoreLabel)) {
+        core.info(`Ignoring issue with label ${ignoreLabel}`);
+        return;
+      }
+    }
+
     const parsedRules = JSON.parse(rules) as Rule[];
     const results = parsedRules
       .map(rule => {
@@ -53,14 +69,6 @@ async function run() {
         }
       })
       .filter(Boolean);
-
-    const issueMetadata = {
-      owner: issue.owner,
-      repo: issue.repo,
-      issue_number: issue.number,
-    };
-
-    const issueData = await client.issues.get(issueMetadata);
 
     if (results.length > 0) {
       // Comment and close if failed any rule
@@ -100,9 +108,9 @@ async function run() {
 }
 
 /**
- * Checks all the texts in an array through an RegEx pattern 
+ * Checks all the texts in an array through an RegEx pattern
  * and returns the match results of the ones that matched.
- * 
+ *
  * @param patternString The RegEx input in string format that will be created.
  * @param texts The text array that will be tested through the pattern.
  * @param ignoreCase If it should be case insensitive.
