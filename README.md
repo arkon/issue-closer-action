@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Autoclose issues
-      uses: arkon/issue-closer-action@v3.3
+      uses: arkon/issue-closer-action@v3.4
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         rules: |
